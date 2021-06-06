@@ -33,7 +33,7 @@ api = Api(app)
 
 
 
-def ingredient_based_recommendation(selectedCuisine):
+def ingredient_based_recommendation(selectedrecipe):
     foodsx = pd.read_json (r'ultimate_food.json')
     foods = foodsx.T
     leng =len(foods.index)
@@ -77,14 +77,14 @@ def ingredient_based_recommendation(selectedCuisine):
     #print(indices)  # indices can be incremented 1
 
     # Get the index of the movie that matches the title
-    idx = indices[selectedCuisine]
+    idx = indices[selectedrecipe]
     # Get the pairwsie similarity scores of all movies with that movie
     sim_scores = list(enumerate(cosine_sim[idx]))
     # Sort the movies based on the similarity scores
     sim_scores.sort(key=lambda x: x[1], reverse=True)
 
     # Get the scores of the 10 most similar movies
-    sim_scores = sim_scores[0:10]
+    sim_scores = sim_scores[1:5]
 
     # Get the movie indices
     cuisine_indices = [i[0] for i in sim_scores]
@@ -110,8 +110,8 @@ class Hello(Resource):
 class Recommendation(Resource):
     # Write method to fetch data from the CSV file
     def get(self):
-        recname = request.args.get("RecipeName")
-        recomm = ingredient_based_recommendation(recname)
+        reckey = request.args.get("RecipeKey")
+        recomm = ingredient_based_recommendation(reckey)
         return recomm
 
     def post(self):
