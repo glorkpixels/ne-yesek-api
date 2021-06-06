@@ -45,7 +45,7 @@ def ingredient_based_recommendation(selectedrecipe):
     
     foods["Index"] = indexes
     foods = foods.set_index("Index")   
-    cuisine = foods["Keys"]
+    cuisine = foods["IngridientNames"]
 
     # Define a TF-IDF Vectorizer Object. Remove all english stop words such as 'the', 'a'
     tfidf = TfidfVectorizer(stop_words='english')  # This was used first which is correct.
