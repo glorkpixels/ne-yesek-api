@@ -73,7 +73,7 @@ def ingredient_based_recommendation(selectedrecipe):
     print(cosine_sim[2])"""
 
     # Construct a reverse map of indices and movie titles
-    indices = pd.Series(foods.index, index=foods['Name'])
+    indices = pd.Series(foods.index, index=foods['Keys'])
     #print(indices)  # indices can be incremented 1
 
     # Get the index of the movie that matches the title
