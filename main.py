@@ -1,14 +1,19 @@
+# import necessary libraries
+
+# --------------------------- FLASK API IMPORTS START-------------------------------
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
 from flask import request
-import pandas as pd
-import ast
-import pandas as pd
-# import necessary libraries
-import random
-import numpy as np
+# --------------------------- FLASK API IMPORTS END-------------------------------
 
-import json
+
+# --------------------------- FIREBASE LEARNING IMPORTS START-------------------------------
+from firebase import firebase
+from firebase.firebase import FirebaseApplication
+from firebase.firebase import FirebaseAuthentication
+firebase = firebase.FirebaseApplication('https://ne-yesek-ebf2f-default-rtdb.europe-west1.firebasedatabase.app/', None)
+# --------------------------- FIREBASE IMPORTS END -------------------------------
+
 # --------------------------- MACHINE LEARNING IMPORTS START-------------------------------
 from pandas import DataFrame
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -18,13 +23,22 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
+import pandas as pd
+import ast
+import random
+import numpy as np
+import json
+
 # --------------------------- MACHINE LEARNING IMPORTS END -------------------------------
 
 
 app = Flask(__name__)
 api = Api(app)
 
-
+def get_user_cellar_from_firebase(UserKey):
+    
+    result = firebase.get('/UserCellarList/CnL9JzPEZLaDynXK1Qdbr3aiJEA3', None)
+    
 
 
 def ingredient_based_recommendation(selectedrecipe):
