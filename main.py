@@ -210,7 +210,14 @@ class RecommendationOneMeal(Resource):
         userPreferences= request.args.get("UserPref")
         homeIngres = request.args.get("HomeIngredients")
         mealSelection = request.args.get("MealSelect")
-        return "One Meal:" + userKey + userPreferences + homeIngres + mealSelection
+        
+        
+        var = '{ "One Meal": "' + + userKey + userPreferences + homeIngres + mealSelection +'"}'
+
+        y = json.loads(var)
+        
+        
+        return y
 
     def post(self):
     # Write method to write data to the CSV file
