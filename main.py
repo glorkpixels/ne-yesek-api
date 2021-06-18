@@ -9,22 +9,16 @@ import random
 import numpy as np
 
 import json
-# Models
+# --------------------------- MACHINE LEARNING IMPORTS START-------------------------------
 from pandas import DataFrame
-# Content-Based Recommendation (Description Only) Term Frequency-Inverse Document Frequency Vectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
-# Content-Based Recommendation Linear Kernel for Cosine Similarity
 from sklearn.metrics.pairwise import linear_kernel
-# Content-Based Recommendation Parsing the stringified features into their corresponding python objects
 from ast import literal_eval
-# Content-Based Recommendation CountVectorizer  for Creation of the Count Matrix
 from sklearn.feature_extraction.text import CountVectorizer
-# Content-Based Recommendation Computation of the Cosine Similarity Matrix Based
 from sklearn.metrics.pairwise import cosine_similarity
-
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
-
+# --------------------------- MACHINE LEARNING IMPORTS END -------------------------------
 
 
 app = Flask(__name__)
@@ -46,58 +40,82 @@ def ingredient_based_recommendation(selectedrecipe):
     foods["Index"] = indexes
     foods = foods.set_index("Index")   
     cuisine = foods["IngridientNames"]
-
-    # Define a TF-IDF Vectorizer Object. Remove all english stop words such as 'the', 'a'
-    tfidf = TfidfVectorizer(stop_words='english')  # This was used first which is correct.
-    # tfidf = TfidfVectorizer(analyzer='word',ngram_range=(1, 2),min_df=0,stop_words='english') #This is an alternative of the above.
-
-    # Replace NaN with an empty string
-    # descriptions = descriptions.fillna('')
-
-    # Construct the required TF-IDF matrix by fitting and transforming the data
+    tfidf = TfidfVectorizer(stop_words='english')
     tfidf_matrix = tfidf.fit_transform(cuisine)
-    # print(tfidf_matrix)
-
-    # Output the shape of tfidf_matrix
     tfidf_matrix.shape
-    # print(tfidf_matrix.shape)
-
-    # all the words in descriptions
-    feature_names = tfidf.get_feature_names()
-    # print(feature_names)
-
-    # Compute the cosine similarity matrix
+    #feature_names = tfidf.get_feature_names()
     cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
-    #print(cosine_sim)
-    """print(cosine_sim.shape)
-    print(cosine_sim[2])"""
-
-    # Construct a reverse map of indices and movie titles
     indices = pd.Series(foods.index, index=foods['Keys'])
-    #print(indices)  # indices can be incremented 1
-
-    # Get the index of the movie that matches the title
     idx = indices[selectedrecipe]
-    # Get the pairwsie similarity scores of all movies with that movie
     sim_scores = list(enumerate(cosine_sim[idx]))
-    # Sort the movies based on the similarity scores
     sim_scores.sort(key=lambda x: x[1], reverse=True)
-
-    # Get the scores of the 10 most similar movies
     sim_scores = sim_scores[1:5]
-
-    # Get the movie indices
-    cuisine_indices = [i[0] for i in sim_scores]
-    
-    result = foods['Keys'].iloc[cuisine_indices].to_json(orient="split")
+    ingredient_indices = [i[0] for i in sim_scores]
+    result = foods['Keys'].iloc[ingredient_indices].to_json(orient="split")
     parsed = json.loads(result)
     #json.dumps(parsed, indent=4) 
-    
-    # Return the top 10 most similar movies
     
     return parsed
 
 
+
+def cuisine_based_recommendation(selectedcuisine):
+    foodsx = pd.read_json (r'ultimate_food.json')
+    foods = foodsx.T
+    leng =len(foods.index)
+    indexes = []
+    p = foods.index.values
+    foods.insert( 0, column="Keys",value = p)
+    for i in range(0,leng):
+        indexes.append(i)
+    
+    foods["Index"] = indexes
+    foods = foods.set_index("Index")   
+    cuisine = foods["IngridientNames"]
+    tfidf = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = tfidf.fit_transform(cuisine)
+    tfidf_matrix.shape
+    #feature_names = tfidf.get_feature_names()
+    cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+    indices = pd.Series(foods.index, index=foods['Keys'])
+    idx = indices[selectedcuisine]
+    sim_scores = list(enumerate(cosine_sim[idx]))
+    sim_scores.sort(key=lambda x: x[1], reverse=True)
+    sim_scores = sim_scores[1:5]
+    cuisine_indices = [i[0] for i in sim_scores]
+    result = foods['Keys'].iloc[cuisine_indices].to_json(orient="split")
+    parsed = json.loads(result)
+
+    return parsed
+
+def main_category_based_recommendation(selectedmaincategory):
+    foodsx = pd.read_json (r'ultimate_food.json')
+    foods = foodsx.T
+    leng =len(foods.index)
+    indexes = []
+    p = foods.index.values
+    foods.insert( 0, column="Keys",value = p)
+    for i in range(0,leng):
+        indexes.append(i)
+    
+    foods["Index"] = indexes
+    foods = foods.set_index("Index")   
+    cuisine = foods["IngridientNames"]
+    tfidf = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = tfidf.fit_transform(cuisine)
+    tfidf_matrix.shape
+    #feature_names = tfidf.get_feature_names()
+    cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+    indices = pd.Series(foods.index, index=foods['Keys'])
+    idx = indices[selectedmaincategory]
+    sim_scores = list(enumerate(cosine_sim[idx]))
+    sim_scores.sort(key=lambda x: x[1], reverse=True)
+    sim_scores = sim_scores[1:5]
+    main_category_indices = [i[0] for i in sim_scores]
+    result = foods['Keys'].iloc[main_category_indices].to_json(orient="split")
+    parsed = json.loads(result)
+    
+    return parsed
 class Hello(Resource):
     # Write method to fetch data from the CSV file
     def get(self):
@@ -118,12 +136,92 @@ class Recommendation(Resource):
     # Write method to write data to the CSV file
         return "this is a recommendation post req"
     
+
+class RecommendationLive(Resource):
+    # Write method to fetch data from the CSV file
+    def get(self):
+        userKey = request.args.get("UserKey")
+        userPreferences= request.args.get("UserPref")
+        
+        mealDay = request.args.get("MealDay")       
+        
+        mealList= [] 
+        breakfastBool = request.args.get("Breakfast")
+        lunchBool = request.args.get("Lunch")
+        dinnerBool = request.args.get("Dinner")
+        
+        homeIngres = request.args.get("HomeIngredients")
+        
+        
+        if mealDay == 1:
+            if breakfastBool == 1 and lunchBool ==1 and dinnerBool ==1:
+                if homeIngres ==1:
+                    print("Home")
+                    if userPreferences ==1:
+                        pass
+                else:
+                    if userPreferences ==1:
+                        pass
+                    
+            elif breakfastBool == 1 and lunchBool ==1 and dinnerBool ==0:
+                if homeIngres ==1:
+                    print("Home")
+                    if userPreferences ==1:
+                        pass
+                else:
+                    if userPreferences ==1:
+                        pass
+                    
+            elif breakfastBool == 1 and lunchBool ==0 and dinnerBool ==1:
+                if homeIngres ==1:
+                    print("Home")
+                    if userPreferences ==1:
+                        pass
+                else:
+                    if userPreferences ==1:
+                        pass
+            
+            elif breakfastBool == 0 and lunchBool ==1 and dinnerBool ==1:
+                if homeIngres ==1:
+                    print("Home")
+                    if userPreferences ==1:
+                        pass
+                else:
+                    if userPreferences ==1:
+                        pass
+                    
+        if mealDay == 2:
+            pass
+        if mealDay == 3:
+            pass
+
+        
+        return "fuck"
+
+    def post(self):
+    # Write method to write data to the CSV file
+        return "this is a recommendation post req"
     
-    
+
+class RecommendationOneMeal(Resource):
+    # Write method to fetch data from the CSV file
+    def get(self):
+        userKey = request.args.get("UserKey")
+        userPreferences= request.args.get("UserPref")
+        homeIngres = request.args.get("HomeIngredients")
+        mealSelection = request.args.get("MealSelect")
+        return "One Meal:" + userKey + userPreferences + homeIngres + mealSelection
+
+    def post(self):
+    # Write method to write data to the CSV file
+        return "this is a recommendation post req"    
 
 
 api.add_resource(Hello, '/hello')
 api.add_resource(Recommendation, '/recommendation')
+api.add_resource(RecommendationLive, '/recommendalive')
+api.add_resource(RecommendationOneMeal, '/recommendonemeal')
+
 
 if __name__ == '__main__':
     app.run()  # run our Flask app
