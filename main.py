@@ -212,7 +212,7 @@ class RecommendationOneMeal(Resource):
         mealSelection = request.args.get("MealSelect")
         
         
-        var = '{ "One Meal": "' + + userKey + userPreferences + homeIngres + mealSelection +'"}'
+        var = '{ "One Meal": "' + userKey + userPreferences + homeIngres + mealSelection +'"}'
 
         y = json.loads(var)
         
