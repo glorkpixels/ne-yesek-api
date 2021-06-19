@@ -37,11 +37,52 @@ api = Api(app)
 
 def get_user_cellar_from_firebase(UserKey):
     
-    result = firebase.get('/UserCellarList/CnL9JzPEZLaDynXK1Qdbr3aiJEA3', None)
+    result = firebase.get('/UserCellarList/'+UserKey, None)
+    list_of_dict_values = list(result.values())
+
+    FavIngres = []
+    for i in list_of_dict_values:
+        if i["name"] not in FavIngres:
+            FavIngres.append(i["name"])
+            
+    ingridientList = list(dict.fromkeys(FavIngres))
+    joined_string = ", ".join(ingridientList)   
+    print(joined_string)
+    return joined_string
     
+    
+def get_user_fav_recipes_from_firebase(UserKey):
+    
+    result = firebase.get('/UserFavorites/'+UserKey+'/Meals', None)
+    #print(type(result))
+
+    list_of_dict_values = list(result.values())
+    #print(type(list_of_dict_values))
+    
+    FavIngres = []
+    for i in list_of_dict_values:
+        if i["mKey"] not in FavIngres:
+            FavIngres.append(i["mKey"])
+            
+    ingridientList = list(dict.fromkeys(FavIngres))
+    #print(ingridientList)
+    return ingridientList
+
+    
+def get_user_fav_ingres_from_firebase(UserKey):
+    result = firebase.get('/UserFavorites/'+UserKey+'/Ingredient', None)
+    list_of_dict_values = list(result.values())
+    FavIngres = []
+    for i in list_of_dict_values:
+        if i["mKey"] not in FavIngres:
+            FavIngres.append(i["mKey"])
+            
+    ingridientList = list(dict.fromkeys(FavIngres))
+    joined_string = ", ".join(ingridientList)   
+    return joined_string
 
 
-def ingredient_based_recommendation(selectedrecipe):
+def ingredient_based_recommendation_recipe(selectedrecipe):
     foodsx = pd.read_json (r'ultimate_food.json')
     foods = foodsx.T
     leng =len(foods.index)
@@ -72,6 +113,35 @@ def ingredient_based_recommendation(selectedrecipe):
     return parsed
 
 
+def ingredient_based_recommendation(selectedcuisine,mealDay):
+    print(str(mealDay) + "mealday")
+    foodsx = pd.read_json (r'ultimate_food.json')
+    foods = foodsx.T
+    leng =len(foods.index)
+    indexes = []
+    p = foods.index.values
+    foods.insert( 0, column="Keys",value = p)
+    for i in range(0,leng):
+        indexes.append(i)
+    foods["Index"] = indexes
+    foods = foods.set_index("Index")   
+    foods.loc[len(foods.index)] = ['Any','Any','Any','Any',selectedcuisine,'Any','Any','Any','Any','Any','Any','Any'] 
+    cuisine = foods["IngridientNames"]
+    tfidf = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = tfidf.fit_transform(cuisine)
+    tfidf_matrix.shape
+    #feature_names = tfidf.get_feature_names()
+    cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+    indices = pd.Series(foods.index, index=foods['IngridientNames'])
+    idx = indices[selectedcuisine]
+    sim_scores = list(enumerate(cosine_sim[idx]))
+    sim_scores.sort(key=lambda x: x[1], reverse=True)
+    sim_scores = sim_scores[1:mealDay*2+1]
+    cuisine_indices = [i[0] for i in sim_scores]
+    result = foods['Name'].iloc[cuisine_indices].to_json(orient="split")
+    parsed = json.loads(result)
+
+    return parsed
 
 def cuisine_based_recommendation(selectedcuisine):
     foodsx = pd.read_json (r'ultimate_food.json')
@@ -102,7 +172,9 @@ def cuisine_based_recommendation(selectedcuisine):
 
     return parsed
 
-def main_category_based_recommendation(selectedmaincategory):
+
+
+def breakfast_recommendation(title):
     foodsx = pd.read_json (r'ultimate_food.json')
     foods = foodsx.T
     leng =len(foods.index)
@@ -113,23 +185,32 @@ def main_category_based_recommendation(selectedmaincategory):
         indexes.append(i)
     
     foods["Index"] = indexes
-    foods = foods.set_index("Index")   
-    cuisine = foods["IngridientNames"]
-    tfidf = TfidfVectorizer(stop_words='english')
-    tfidf_matrix = tfidf.fit_transform(cuisine)
-    tfidf_matrix.shape
-    #feature_names = tfidf.get_feature_names()
-    cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
-    indices = pd.Series(foods.index, index=foods['Keys'])
-    idx = indices[selectedmaincategory]
-    sim_scores = list(enumerate(cosine_sim[idx]))
-    sim_scores.sort(key=lambda x: x[1], reverse=True)
-    sim_scores = sim_scores[1:5]
-    main_category_indices = [i[0] for i in sim_scores]
-    result = foods['Keys'].iloc[main_category_indices].to_json(orient="split")
+    foods = foods.set_index("Index") 
+
+    features = ['CategoryBread']
+    foods['soup'] = ''
+    for feature in features:
+        foods['soup'] += foods[feature]
+
+    count = CountVectorizer(stop_words='english')  
+
+    count_matrix = count.fit_transform(foods['soup'])
+    print(count_matrix.shape)
+
+    foods.reset_index()
+    indices = pd.Series(foods.index, index=foods['CategoryBread'])
+    idx = indices[title]
+    print(i)
+    randomch = random.choice(idx)
+    result = foods.iloc[randomch][['Keys']].to_json(orient="split")
     parsed = json.loads(result)
-    
+ 
     return parsed
+
+
+def ordinary_meal_recommendation():
+    print("idk")
+
 class Hello(Resource):
     # Write method to fetch data from the CSV file
     def get(self):
@@ -143,7 +224,7 @@ class Recommendation(Resource):
     # Write method to fetch data from the CSV file
     def get(self):
         reckey = request.args.get("RecipeKey")
-        recomm = ingredient_based_recommendation(reckey)
+        recomm = ingredient_based_recommendation(reckey,3)
         return recomm
 
     def post(self):
@@ -155,59 +236,71 @@ class RecommendationLive(Resource):
     # Write method to fetch data from the CSV file
     def get(self):
         userKey = request.args.get("UserKey")
-        userPreferences= request.args.get("UserPref")
-        
-        mealDay = request.args.get("MealDay")       
-        
+        userPreferences= int(request.args.get("UserPref"))
+        mealDay = int(request.args.get("MealDay"))   
+    
         mealList= [] 
-        breakfastBool = request.args.get("Breakfast")
-        lunchBool = request.args.get("Lunch")
-        dinnerBool = request.args.get("Dinner")
+        breakfastBool = int(request.args.get("Breakfast"))
+        lunchBool = int(request.args.get("Lunch"))
+        dinnerBool = int(request.args.get("Dinner"))
         
-        homeIngres = request.args.get("HomeIngredients")
+        homeIngres = int(request.args.get("HomeIngredients"))
+        ingredientsHome = get_user_cellar_from_firebase(userKey)
+        ingredientsHome += ", " + get_user_fav_ingres_from_firebase(userKey)
+        recipesliked = get_user_fav_recipes_from_firebase(userKey)
+        choice = random.choices(recipesliked)
+        print("lol")
+        print(type(breakfastBool))
+        print(breakfastBool + lunchBool + dinnerBool)
+
+        if breakfastBool == 1 and lunchBool ==1 and dinnerBool ==1:
+            print("lol")
+            if homeIngres ==1:
+                print("Home")
+                return(ingredient_based_recommendation(ingredientsHome,mealDay))
+            else:
+                ingredient_based_recommendation_recipe(choice)
+                
+        elif breakfastBool == 1 and lunchBool ==1 and dinnerBool ==0:
+            if homeIngres ==1:
+                print("Home")
+                if userPreferences ==1:
+                    pass
+                else:
+                    pass
+            else:
+                if userPreferences ==1:
+                    pass
+                else:
+                    pass
+                
+        elif breakfastBool == 1 and lunchBool ==0 and dinnerBool ==1:
+            if homeIngres ==1:
+                print("Home")
+                if userPreferences ==1:
+                    pass
+                else:
+                    pass
+            else:
+                if userPreferences ==1:
+                    pass
+                else:
+                    pass
         
-        
-        if mealDay == 1:
-            if breakfastBool == 1 and lunchBool ==1 and dinnerBool ==1:
-                if homeIngres ==1:
-                    print("Home")
-                    if userPreferences ==1:
-                        pass
+        elif breakfastBool == 0 and lunchBool ==1 and dinnerBool ==1:
+            if homeIngres ==1:
+                print("Home")
+                if userPreferences ==1:
+                    pass
                 else:
-                    if userPreferences ==1:
-                        pass
+                    pass
+            else:
+                if userPreferences ==1:
+                    pass
+                else:
+                    pass
                     
-            elif breakfastBool == 1 and lunchBool ==1 and dinnerBool ==0:
-                if homeIngres ==1:
-                    print("Home")
-                    if userPreferences ==1:
-                        pass
-                else:
-                    if userPreferences ==1:
-                        pass
-                    
-            elif breakfastBool == 1 and lunchBool ==0 and dinnerBool ==1:
-                if homeIngres ==1:
-                    print("Home")
-                    if userPreferences ==1:
-                        pass
-                else:
-                    if userPreferences ==1:
-                        pass
-            
-            elif breakfastBool == 0 and lunchBool ==1 and dinnerBool ==1:
-                if homeIngres ==1:
-                    print("Home")
-                    if userPreferences ==1:
-                        pass
-                else:
-                    if userPreferences ==1:
-                        pass
-                    
-        if mealDay == 2:
-            pass
-        if mealDay == 3:
-            pass
+
 
         
         return "fuck"
@@ -226,9 +319,19 @@ class RecommendationOneMeal(Resource):
         mealSelection = request.args.get("MealSelect")
         
         
-        var = '{ "One Meal": "' + userKey + userPreferences + homeIngres + mealSelection +'"}'
-
-        y = json.loads(var)
+        varx = '{ "One Meal": "' + userKey + userPreferences + homeIngres + mealSelection +'"}'
+        y = json.loads(varx)
+        print(mealSelection)
+        if(mealSelection == 0):
+            var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+            return var
+        
+        if(mealSelection == 1):
+            var = ordinary_meal_recommendation()
+            
+        if(mealSelection == 2):
+            var = ordinary_meal_recommendation()
+        
         
         
         return y
