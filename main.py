@@ -401,6 +401,7 @@ class RecommendationLive(Resource):
                             'Dinner': pop2
                             }
                     result = firebase.post('/UserMenus/'+userKey+'/',data)
+                    result = firebase.post('/e/'+userKey+'/',1)
                     daycount = 2
                     if(mealDay >2):
                         for i in range(1,mealDay-1):
