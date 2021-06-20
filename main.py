@@ -4,9 +4,6 @@
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
 from flask import request
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-
 # --------------------------- FLASK API IMPORTS END-------------------------------
 
 
@@ -37,7 +34,6 @@ import json
 
 app = Flask(__name__)
 api = Api(app)
-limiter = Limiter(app, key_func=get_remote_address)
 
 def get_user_cellar_from_firebase(UserKey):
     
@@ -229,7 +225,7 @@ class Recommendation(Resource):
     # Write method to write data to the CSV file
         return "this is a recommendation post req"
     
-@limiter.limit("1/minute")
+
 class RecommendationLive(Resource):
     # Write method to fetch data from the CSV file
     def get(self):
