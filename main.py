@@ -204,7 +204,6 @@ def breakfast_recommendation(title):
  
     return foods.iloc[randomch][['Keys']]
 
-    print("idk")
 
 class Hello(Resource):
     # Write method to fetch data from the CSV file
@@ -260,11 +259,12 @@ class RecommendationLive(Resource):
                 pop2 = retlist.pop(0)
                 
                 data =  { 
+                        'Day' : 1,
                         'Breakfast' : breakfs[0],
                         'Lunch': pop1,
                         'Dinner': pop2
                         }
-                result = firebase.post('/UserMenus/'+userKey+'/day1',data)
+                result = firebase.post('/UserMenus/'+userKey+'/',data)
                 daycount = 2
                 if(mealDay >2):
                      for i in range(mealDay-1):
@@ -280,18 +280,19 @@ class RecommendationLive(Resource):
                         pop2 = list4.pop(0)
                         
                         data =  { 
+                        'Day' : daycount,
                         'Breakfast' : breakfs[0],
                         'Lunch': pop1,
                         'Dinner': pop2
                         }
-                        result = firebase.post('/UserMenus/'+userKey+'/day'+str(daycount)+'/',data)
+                        result = firebase.post('/UserMenus/'+userKey+'/',data)
                         daycount +=1
                 
                 print(pop1 + " xd" + pop2)
-                return parsed
+               
             else:
 
-                return(ingredient_based_recommendation_recipe(choice[0]))
+                print("lol")
                 
         elif breakfastBool == 1 and lunchBool ==1 and dinnerBool ==0:
             if homeIngres ==1:
@@ -306,10 +307,11 @@ class RecommendationLive(Resource):
                 pop2 = retlist.pop(0)
                 
                 data =  { 
+                         'Day' : 1,
                         'Breakfast' : breakfs[0],
                         'Lunch': pop1
                         }
-                result = firebase.post('/UserMenus/'+userKey+'/day1',data)
+                result = firebase.post('/UserMenus/'+userKey+'/',data)
                 daycount = 2
                 if(mealDay >2):
                      for i in range(mealDay-1):
@@ -325,17 +327,19 @@ class RecommendationLive(Resource):
                         pop2 = list4.pop(0)
                         
                         data =  { 
+                                 'Day' : daycount,
                         'Breakfast' : breakfs[0],
                         'Lunch': pop1
                         }
-                        result = firebase.post('/UserMenus/'+userKey+'/day'+str(daycount)+'/',data)
+                        
+                        result = firebase.post('/UserMenus/'+userKey+'/',data)
                         daycount +=1
                 
                 print(pop1 + " xd" + pop2)
-                return parsed
-            else:
-                return(ingredient_based_recommendation_recipe(choice[0]))
                 
+            else:
+                #return(ingredient_based_recommendation_recipe(choice[0]))
+                pass
         elif breakfastBool == 1 and lunchBool ==0 and dinnerBool ==1:
             if homeIngres ==1:
                 ret = ingredient_based_recommendation(ingredientsHome)
@@ -349,10 +353,11 @@ class RecommendationLive(Resource):
                 pop2 = retlist.pop(0)
                 
                 data =  { 
+                         'Day' : 1,
                         'Breakfast' : breakfs[0],
                         'Dinner': pop2
                         }
-                result = firebase.post('/UserMenus/'+userKey+'/day1',data)
+                result = firebase.post('/UserMenus/'+userKey+'/',data)
                 daycount = 2
                 if(mealDay >2):
                      for i in range(mealDay-1):
@@ -368,14 +373,16 @@ class RecommendationLive(Resource):
                         pop2 = list4.pop(0)
                         
                         data =  { 
+                                 'Day' : daycount,
                         'Breakfast' : breakfs[0],
                         'Dinner': pop2
                         }
-                        result = firebase.post('/UserMenus/'+userKey+'/day'+str(daycount)+'/',data)
+                        
+                        result = firebase.post('/UserMenus/'+userKey+'/',data)
                         daycount +=1
                 
                 print(pop1 + " xd" + pop2)
-                return parsed
+                
             else:
                 return(ingredient_based_recommendation_recipe(choice[0]))
         
@@ -390,10 +397,11 @@ class RecommendationLive(Resource):
                 pop2 = retlist.pop(0)
                 
                 data =  { 
+                         'Day' : 1,
                         'Lunch': pop1,
                         'Dinner': pop2
                         }
-                result = firebase.post('/UserMenus/'+userKey+'/day1',data)
+                result = firebase.post('/UserMenus/'+userKey+'/',data)
                 daycount = 2
                 if(mealDay >2):
                      for i in range(mealDay-1):
@@ -408,14 +416,16 @@ class RecommendationLive(Resource):
                         pop2 = list4.pop(0)
                         
                         data =  { 
+                                 'Day' : daycount,
                         'Lunch': pop1,
                         'Dinner': pop2
                         }
-                        result = firebase.post('/UserMenus/'+userKey+'/day'+str(daycount)+'/',data)
+                        
+                        result = firebase.post('/UserMenus/'+userKey+'/',data)
                         daycount +=1
                 
                 print(pop1 + " xd" + pop2)
-                return parsed
+                
             else:
                 return(ingredient_based_recommendation_recipe(choice[0]))
                     
