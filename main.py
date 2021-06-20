@@ -267,7 +267,7 @@ class RecommendationLive(Resource):
                 result = firebase.post('/UserMenus/'+userKey+'/',data)
                 daycount = 2
                 if(mealDay >2):
-                     for i in range(mealDay-1):
+                     for i in range(mealDay-2):
                         var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
                         breakfs = var.tolist()
                         
@@ -314,7 +314,7 @@ class RecommendationLive(Resource):
                 result = firebase.post('/UserMenus/'+userKey+'/',data)
                 daycount = 2
                 if(mealDay >2):
-                     for i in range(mealDay-1):
+                     for i in range(mealDay-2):
                         var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
                         breakfs = var.tolist()
                         
@@ -360,7 +360,7 @@ class RecommendationLive(Resource):
                 result = firebase.post('/UserMenus/'+userKey+'/',data)
                 daycount = 2
                 if(mealDay >2):
-                     for i in range(mealDay-1):
+                     for i in range(mealDay-2):
                         var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
                         breakfs = var.tolist()
                         
@@ -404,7 +404,7 @@ class RecommendationLive(Resource):
                 result = firebase.post('/UserMenus/'+userKey+'/',data)
                 daycount = 2
                 if(mealDay >2):
-                     for i in range(mealDay-1):
+                     for i in range(mealDay-2):
                         var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
                         
                         popped =retlist.pop(0)
