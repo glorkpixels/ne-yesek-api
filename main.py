@@ -234,200 +234,204 @@ class RecommendationLive(Resource):
         firebase.delete('/UserMenus/', userKey)  
         userPreferences= int(request.args.get("UserPref"))
         mealDay = int(request.args.get("MealDay"))   
-    
+        try:
+            breakfastBool = int(request.args.get("Breakfast"))
+            lunchBool = int(request.args.get("Lunch"))
+            dinnerBool = int(request.args.get("Dinner"))
+            
+            homeIngres = int(request.args.get("HomeIngredients"))
+            ingredientsHome = get_user_cellar_from_firebase(userKey)
+            ingredientsHome += ", " + get_user_fav_ingres_from_firebase(userKey)
+            recipesliked = get_user_fav_recipes_from_firebase(userKey)
+            choice = random.choices(recipesliked)
+
+            if breakfastBool == 1 and lunchBool ==1 and dinnerBool ==1:
+                if homeIngres ==1:
+                    ret = ingredient_based_recommendation(ingredientsHome)
+                    var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                    result = ret.to_json(orient="split")
+                    parsed = json.loads(result)
+                    print(ret.tolist())
+                    retlist = ret.tolist()
+                    breakfs = var.tolist()
+                    pop1 = retlist.pop(0)
+                    pop2 = retlist.pop(0)
+                    
+                    data =  { 
+                            'Day' : 1,
+                            'Breakfast' : breakfs[0],
+                            'Lunch': pop1,
+                            'Dinner': pop2
+                            }
+                    result = firebase.post('/UserMenus/'+userKey+'/',data)
+                    daycount = 2
+                    if(mealDay >2):
+                        for i in range(1,mealDay-1):
+                            var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                            breakfs = var.tolist()
+                            
+                            popped =retlist.pop(0)
+                            list4=ingredient_based_recommendation_recipe(popped)
+                            list4 = list4.tolist()
+                            list4.pop(0)
+                            list4.pop(0)
+                            pop1 = list4.pop(0)
+                            pop2 = list4.pop(0)
+                            
+                            data =  { 
+                            'Day' : daycount,
+                            'Breakfast' : breakfs[0],
+                            'Lunch': pop1,
+                            'Dinner': pop2
+                            }
+                            result = firebase.post('/UserMenus/'+userKey+'/',data)
+                            daycount +=1
+                    
+                    print(pop1 + " xd" + pop2)
+                
+                else:
+
+                    print("lol")
+                    
+            elif breakfastBool == 1 and lunchBool ==1 and dinnerBool ==0:
+                if homeIngres ==1:
+                    ret = ingredient_based_recommendation(ingredientsHome)
+                    var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                    result = ret.to_json(orient="split")
+                    parsed = json.loads(result)
+                    print(ret.tolist())
+                    retlist = ret.tolist()
+                    breakfs = var.tolist()
+                    pop1 = retlist.pop(0)
+                    pop2 = retlist.pop(0)
+                    
+                    data =  { 
+                            'Day' : 1,
+                            'Breakfast' : breakfs[0],
+                            'Lunch': pop1
+                            }
+                    result = firebase.post('/UserMenus/'+userKey+'/',data)
+                    daycount = 2
+                    if(mealDay >2):
+                        for i in range(1,mealDay-1):
+                            var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                            breakfs = var.tolist()
+                            
+                            popped =retlist.pop(0)
+                            list4=ingredient_based_recommendation_recipe(popped)
+                            list4 = list4.tolist()
+                            list4.pop(0)
+                            list4.pop(0)
+                            pop1 = list4.pop(0)
+                            pop2 = list4.pop(0)
+                            
+                            data =  { 
+                                    'Day' : daycount,
+                            'Breakfast' : breakfs[0],
+                            'Lunch': pop1
+                            }
+                            
+                            result = firebase.post('/UserMenus/'+userKey+'/',data)
+                            daycount +=1
+                    
+                    print(pop1 + " xd" + pop2)
+                    
+                else:
+                    #return(ingredient_based_recommendation_recipe(choice[0]))
+                    pass
+            elif breakfastBool == 1 and lunchBool ==0 and dinnerBool ==1:
+                if homeIngres ==1:
+                    ret = ingredient_based_recommendation(ingredientsHome)
+                    var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                    result = ret.to_json(orient="split")
+                    parsed = json.loads(result)
+                    print(ret.tolist())
+                    retlist = ret.tolist()
+                    breakfs = var.tolist()
+                    pop1 = retlist.pop(0)
+                    pop2 = retlist.pop(0)
+                    
+                    data =  { 
+                            'Day' : 1,
+                            'Breakfast' : breakfs[0],
+                            'Dinner': pop2
+                            }
+                    result = firebase.post('/UserMenus/'+userKey+'/',data)
+                    daycount = 2
+                    if(mealDay >2):
+                        for i in range(1,mealDay-1):
+                            var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                            breakfs = var.tolist()
+                            
+                            popped =retlist.pop(0)
+                            list4=ingredient_based_recommendation_recipe(popped)
+                            list4 = list4.tolist()
+                            list4.pop(0)
+                            list4.pop(0)
+                            pop1 = list4.pop(0)
+                            pop2 = list4.pop(0)
+                            
+                            data =  { 
+                                    'Day' : daycount,
+                            'Breakfast' : breakfs[0],
+                            'Dinner': pop2
+                            }
+                            
+                            result = firebase.post('/UserMenus/'+userKey+'/',data)
+                            daycount +=1
+                    
+                    print(pop1 + " xd" + pop2)
+                    
+                else:
+                    return(ingredient_based_recommendation_recipe(choice[0]))
+            
+            elif breakfastBool == 0 and lunchBool ==1 and dinnerBool ==1:
+                if homeIngres ==1:
+                    ret = ingredient_based_recommendation(ingredientsHome)
+                    result = ret.to_json(orient="split")
+                    parsed = json.loads(result)
+                    print(ret.tolist())
+                    retlist = ret.tolist()
+                    pop1 = retlist.pop(0)
+                    pop2 = retlist.pop(0)
+                    
+                    data =  { 
+                            'Day' : 1,
+                            'Lunch': pop1,
+                            'Dinner': pop2
+                            }
+                    result = firebase.post('/UserMenus/'+userKey+'/',data)
+                    daycount = 2
+                    if(mealDay >2):
+                        for i in range(1,mealDay-1):
+                            var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                            
+                            popped =retlist.pop(0)
+                            list4=ingredient_based_recommendation_recipe(popped)
+                            list4 = list4.tolist()
+                            list4.pop(0)
+                            list4.pop(0)
+                            pop1 = list4.pop(0)
+                            pop2 = list4.pop(0)
+                            
+                            data =  { 
+                                    'Day' : daycount,
+                            'Lunch': pop1,
+                            'Dinner': pop2
+                            }
+                            
+                            result = firebase.post('/UserMenus/'+userKey+'/',data)
+                            result = firebase.post('/e/'+userKey+'/',daycount)
+                            daycount +=1
+                    
+                    print(pop1 + " xd" + pop2)
+                    
+                else:
+                    return(ingredient_based_recommendation_recipe(choice[0]))
+        except print(0):
+            pass
         mealList= [] 
-        breakfastBool = int(request.args.get("Breakfast"))
-        lunchBool = int(request.args.get("Lunch"))
-        dinnerBool = int(request.args.get("Dinner"))
         
-        homeIngres = int(request.args.get("HomeIngredients"))
-        ingredientsHome = get_user_cellar_from_firebase(userKey)
-        ingredientsHome += ", " + get_user_fav_ingres_from_firebase(userKey)
-        recipesliked = get_user_fav_recipes_from_firebase(userKey)
-        choice = random.choices(recipesliked)
-
-        if breakfastBool == 1 and lunchBool ==1 and dinnerBool ==1:
-            if homeIngres ==1:
-                ret = ingredient_based_recommendation(ingredientsHome)
-                var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
-                result = ret.to_json(orient="split")
-                parsed = json.loads(result)
-                print(ret.tolist())
-                retlist = ret.tolist()
-                breakfs = var.tolist()
-                pop1 = retlist.pop(0)
-                pop2 = retlist.pop(0)
-                
-                data =  { 
-                        'Day' : 1,
-                        'Breakfast' : breakfs[0],
-                        'Lunch': pop1,
-                        'Dinner': pop2
-                        }
-                result = firebase.post('/UserMenus/'+userKey+'/',data)
-                daycount = 2
-                if(mealDay >2):
-                     for i in range(1,mealDay-1):
-                        var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
-                        breakfs = var.tolist()
-                        
-                        popped =retlist.pop(0)
-                        list4=ingredient_based_recommendation_recipe(popped)
-                        list4 = list4.tolist()
-                        list4.pop(0)
-                        list4.pop(0)
-                        pop1 = list4.pop(0)
-                        pop2 = list4.pop(0)
-                        
-                        data =  { 
-                        'Day' : daycount,
-                        'Breakfast' : breakfs[0],
-                        'Lunch': pop1,
-                        'Dinner': pop2
-                        }
-                        result = firebase.post('/UserMenus/'+userKey+'/',data)
-                        daycount +=1
-                
-                print(pop1 + " xd" + pop2)
-               
-            else:
-
-                print("lol")
-                
-        elif breakfastBool == 1 and lunchBool ==1 and dinnerBool ==0:
-            if homeIngres ==1:
-                ret = ingredient_based_recommendation(ingredientsHome)
-                var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
-                result = ret.to_json(orient="split")
-                parsed = json.loads(result)
-                print(ret.tolist())
-                retlist = ret.tolist()
-                breakfs = var.tolist()
-                pop1 = retlist.pop(0)
-                pop2 = retlist.pop(0)
-                
-                data =  { 
-                         'Day' : 1,
-                        'Breakfast' : breakfs[0],
-                        'Lunch': pop1
-                        }
-                result = firebase.post('/UserMenus/'+userKey+'/',data)
-                daycount = 2
-                if(mealDay >2):
-                     for i in range(1,mealDay-1):
-                        var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
-                        breakfs = var.tolist()
-                        
-                        popped =retlist.pop(0)
-                        list4=ingredient_based_recommendation_recipe(popped)
-                        list4 = list4.tolist()
-                        list4.pop(0)
-                        list4.pop(0)
-                        pop1 = list4.pop(0)
-                        pop2 = list4.pop(0)
-                        
-                        data =  { 
-                                 'Day' : daycount,
-                        'Breakfast' : breakfs[0],
-                        'Lunch': pop1
-                        }
-                        
-                        result = firebase.post('/UserMenus/'+userKey+'/',data)
-                        daycount +=1
-                
-                print(pop1 + " xd" + pop2)
-                
-            else:
-                #return(ingredient_based_recommendation_recipe(choice[0]))
-                pass
-        elif breakfastBool == 1 and lunchBool ==0 and dinnerBool ==1:
-            if homeIngres ==1:
-                ret = ingredient_based_recommendation(ingredientsHome)
-                var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
-                result = ret.to_json(orient="split")
-                parsed = json.loads(result)
-                print(ret.tolist())
-                retlist = ret.tolist()
-                breakfs = var.tolist()
-                pop1 = retlist.pop(0)
-                pop2 = retlist.pop(0)
-                
-                data =  { 
-                         'Day' : 1,
-                        'Breakfast' : breakfs[0],
-                        'Dinner': pop2
-                        }
-                result = firebase.post('/UserMenus/'+userKey+'/',data)
-                daycount = 2
-                if(mealDay >2):
-                     for i in range(1,mealDay-1):
-                        var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
-                        breakfs = var.tolist()
-                        
-                        popped =retlist.pop(0)
-                        list4=ingredient_based_recommendation_recipe(popped)
-                        list4 = list4.tolist()
-                        list4.pop(0)
-                        list4.pop(0)
-                        pop1 = list4.pop(0)
-                        pop2 = list4.pop(0)
-                        
-                        data =  { 
-                                 'Day' : daycount,
-                        'Breakfast' : breakfs[0],
-                        'Dinner': pop2
-                        }
-                        
-                        result = firebase.post('/UserMenus/'+userKey+'/',data)
-                        daycount +=1
-                
-                print(pop1 + " xd" + pop2)
-                
-            else:
-                return(ingredient_based_recommendation_recipe(choice[0]))
-        
-        elif breakfastBool == 0 and lunchBool ==1 and dinnerBool ==1:
-            if homeIngres ==1:
-                ret = ingredient_based_recommendation(ingredientsHome)
-                result = ret.to_json(orient="split")
-                parsed = json.loads(result)
-                print(ret.tolist())
-                retlist = ret.tolist()
-                pop1 = retlist.pop(0)
-                pop2 = retlist.pop(0)
-                
-                data =  { 
-                         'Day' : 1,
-                        'Lunch': pop1,
-                        'Dinner': pop2
-                        }
-                result = firebase.post('/UserMenus/'+userKey+'/',data)
-                daycount = 2
-                if(mealDay >2):
-                     for i in range(1,mealDay-1):
-                        var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
-                        
-                        popped =retlist.pop(0)
-                        list4=ingredient_based_recommendation_recipe(popped)
-                        list4 = list4.tolist()
-                        list4.pop(0)
-                        list4.pop(0)
-                        pop1 = list4.pop(0)
-                        pop2 = list4.pop(0)
-                        
-                        data =  { 
-                                 'Day' : daycount,
-                        'Lunch': pop1,
-                        'Dinner': pop2
-                        }
-                        
-                        result = firebase.post('/UserMenus/'+userKey+'/',data)
-                        daycount +=1
-                
-                print(pop1 + " xd" + pop2)
-                
-            else:
-                return(ingredient_based_recommendation_recipe(choice[0]))
                     
         
         return "fuck"
