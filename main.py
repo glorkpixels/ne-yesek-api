@@ -110,11 +110,10 @@ def ingredient_based_recommendation_recipe(selectedrecipe):
     parsed = json.loads(result)
     #json.dumps(parsed, indent=4) 
     
-    return parsed
+    return foods['Keys'].iloc[ingredient_indices]
 
 
-def ingredient_based_recommendation(selectedcuisine,mealDay):
-    print(str(mealDay) + "mealday")
+def ingredient_based_recommendation(selectedcuisine):
     foodsx = pd.read_json (r'ultimate_food.json')
     foods = foodsx.T
     leng =len(foods.index)
@@ -136,12 +135,12 @@ def ingredient_based_recommendation(selectedcuisine,mealDay):
     idx = indices[selectedcuisine]
     sim_scores = list(enumerate(cosine_sim[idx]))
     sim_scores.sort(key=lambda x: x[1], reverse=True)
-    sim_scores = sim_scores[1:mealDay*2+1]
+    sim_scores = sim_scores[1:11]
     cuisine_indices = [i[0] for i in sim_scores]
     result = foods['Name'].iloc[cuisine_indices].to_json(orient="split")
     parsed = json.loads(result)
 
-    return parsed
+    return foods['Keys'].iloc[cuisine_indices]
 
 def cuisine_based_recommendation(selectedcuisine):
     foodsx = pd.read_json (r'ultimate_food.json')
@@ -171,8 +170,6 @@ def cuisine_based_recommendation(selectedcuisine):
     parsed = json.loads(result)
 
     return parsed
-
-
 
 def breakfast_recommendation(title):
     foodsx = pd.read_json (r'ultimate_food.json')
@@ -205,10 +202,8 @@ def breakfast_recommendation(title):
     result = foods.iloc[randomch][['Keys']].to_json(orient="split")
     parsed = json.loads(result)
  
-    return parsed
+    return foods.iloc[randomch][['Keys']]
 
-
-def ordinary_meal_recommendation():
     print("idk")
 
 class Hello(Resource):
@@ -224,7 +219,7 @@ class Recommendation(Resource):
     # Write method to fetch data from the CSV file
     def get(self):
         reckey = request.args.get("RecipeKey")
-        recomm = ingredient_based_recommendation(reckey,3)
+        recomm = ingredient_based_recommendation(reckey)
         return recomm
 
     def post(self):
@@ -235,7 +230,9 @@ class Recommendation(Resource):
 class RecommendationLive(Resource):
     # Write method to fetch data from the CSV file
     def get(self):
+        
         userKey = request.args.get("UserKey")
+        firebase.delete('/UserMenus/', userKey)  
         userPreferences= int(request.args.get("UserPref"))
         mealDay = int(request.args.get("MealDay"))   
     
@@ -249,59 +246,179 @@ class RecommendationLive(Resource):
         ingredientsHome += ", " + get_user_fav_ingres_from_firebase(userKey)
         recipesliked = get_user_fav_recipes_from_firebase(userKey)
         choice = random.choices(recipesliked)
-        print("lol")
-        print(type(breakfastBool))
-        print(breakfastBool + lunchBool + dinnerBool)
 
         if breakfastBool == 1 and lunchBool ==1 and dinnerBool ==1:
-            print("lol")
             if homeIngres ==1:
-                print("Home")
-                return(ingredient_based_recommendation(ingredientsHome,mealDay))
+                ret = ingredient_based_recommendation(ingredientsHome)
+                var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                result = ret.to_json(orient="split")
+                parsed = json.loads(result)
+                print(ret.tolist())
+                retlist = ret.tolist()
+                breakfs = var.tolist()
+                pop1 = retlist.pop(0)
+                pop2 = retlist.pop(0)
+                
+                data =  { 
+                        'Breakfast' : breakfs[0],
+                        'Lunch': pop1,
+                        'Dinner': pop2
+                        }
+                result = firebase.post('/UserMenus/'+userKey+'/day1',data)
+                daycount = 2
+                if(mealDay >2):
+                     for i in range(mealDay-1):
+                        var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                        breakfs = var.tolist()
+                        
+                        popped =retlist.pop(0)
+                        list4=ingredient_based_recommendation_recipe(popped)
+                        list4 = list4.tolist()
+                        list4.pop(0)
+                        list4.pop(0)
+                        pop1 = list4.pop(0)
+                        pop2 = list4.pop(0)
+                        
+                        data =  { 
+                        'Breakfast' : breakfs[0],
+                        'Lunch': pop1,
+                        'Dinner': pop2
+                        }
+                        result = firebase.post('/UserMenus/'+userKey+'/day'+str(daycount)+'/',data)
+                        daycount +=1
+                
+                print(pop1 + " xd" + pop2)
+                return parsed
             else:
-                ingredient_based_recommendation_recipe(choice)
+
+                return(ingredient_based_recommendation_recipe(choice[0]))
                 
         elif breakfastBool == 1 and lunchBool ==1 and dinnerBool ==0:
             if homeIngres ==1:
-                print("Home")
-                if userPreferences ==1:
-                    pass
-                else:
-                    pass
+                ret = ingredient_based_recommendation(ingredientsHome)
+                var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                result = ret.to_json(orient="split")
+                parsed = json.loads(result)
+                print(ret.tolist())
+                retlist = ret.tolist()
+                breakfs = var.tolist()
+                pop1 = retlist.pop(0)
+                pop2 = retlist.pop(0)
+                
+                data =  { 
+                        'Breakfast' : breakfs[0],
+                        'Lunch': pop1
+                        }
+                result = firebase.post('/UserMenus/'+userKey+'/day1',data)
+                daycount = 2
+                if(mealDay >2):
+                     for i in range(mealDay-1):
+                        var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                        breakfs = var.tolist()
+                        
+                        popped =retlist.pop(0)
+                        list4=ingredient_based_recommendation_recipe(popped)
+                        list4 = list4.tolist()
+                        list4.pop(0)
+                        list4.pop(0)
+                        pop1 = list4.pop(0)
+                        pop2 = list4.pop(0)
+                        
+                        data =  { 
+                        'Breakfast' : breakfs[0],
+                        'Lunch': pop1
+                        }
+                        result = firebase.post('/UserMenus/'+userKey+'/day'+str(daycount)+'/',data)
+                        daycount +=1
+                
+                print(pop1 + " xd" + pop2)
+                return parsed
             else:
-                if userPreferences ==1:
-                    pass
-                else:
-                    pass
+                return(ingredient_based_recommendation_recipe(choice[0]))
                 
         elif breakfastBool == 1 and lunchBool ==0 and dinnerBool ==1:
             if homeIngres ==1:
-                print("Home")
-                if userPreferences ==1:
-                    pass
-                else:
-                    pass
+                ret = ingredient_based_recommendation(ingredientsHome)
+                var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                result = ret.to_json(orient="split")
+                parsed = json.loads(result)
+                print(ret.tolist())
+                retlist = ret.tolist()
+                breakfs = var.tolist()
+                pop1 = retlist.pop(0)
+                pop2 = retlist.pop(0)
+                
+                data =  { 
+                        'Breakfast' : breakfs[0],
+                        'Dinner': pop2
+                        }
+                result = firebase.post('/UserMenus/'+userKey+'/day1',data)
+                daycount = 2
+                if(mealDay >2):
+                     for i in range(mealDay-1):
+                        var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                        breakfs = var.tolist()
+                        
+                        popped =retlist.pop(0)
+                        list4=ingredient_based_recommendation_recipe(popped)
+                        list4 = list4.tolist()
+                        list4.pop(0)
+                        list4.pop(0)
+                        pop1 = list4.pop(0)
+                        pop2 = list4.pop(0)
+                        
+                        data =  { 
+                        'Breakfast' : breakfs[0],
+                        'Dinner': pop2
+                        }
+                        result = firebase.post('/UserMenus/'+userKey+'/day'+str(daycount)+'/',data)
+                        daycount +=1
+                
+                print(pop1 + " xd" + pop2)
+                return parsed
             else:
-                if userPreferences ==1:
-                    pass
-                else:
-                    pass
+                return(ingredient_based_recommendation_recipe(choice[0]))
         
         elif breakfastBool == 0 and lunchBool ==1 and dinnerBool ==1:
             if homeIngres ==1:
-                print("Home")
-                if userPreferences ==1:
-                    pass
-                else:
-                    pass
+                ret = ingredient_based_recommendation(ingredientsHome)
+                result = ret.to_json(orient="split")
+                parsed = json.loads(result)
+                print(ret.tolist())
+                retlist = ret.tolist()
+                pop1 = retlist.pop(0)
+                pop2 = retlist.pop(0)
+                
+                data =  { 
+                        'Lunch': pop1,
+                        'Dinner': pop2
+                        }
+                result = firebase.post('/UserMenus/'+userKey+'/day1',data)
+                daycount = 2
+                if(mealDay >2):
+                     for i in range(mealDay-1):
+                        var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
+                        
+                        popped =retlist.pop(0)
+                        list4=ingredient_based_recommendation_recipe(popped)
+                        list4 = list4.tolist()
+                        list4.pop(0)
+                        list4.pop(0)
+                        pop1 = list4.pop(0)
+                        pop2 = list4.pop(0)
+                        
+                        data =  { 
+                        'Lunch': pop1,
+                        'Dinner': pop2
+                        }
+                        result = firebase.post('/UserMenus/'+userKey+'/day'+str(daycount)+'/',data)
+                        daycount +=1
+                
+                print(pop1 + " xd" + pop2)
+                return parsed
             else:
-                if userPreferences ==1:
-                    pass
-                else:
-                    pass
+                return(ingredient_based_recommendation_recipe(choice[0]))
                     
-
-
         
         return "fuck"
 
@@ -315,26 +432,33 @@ class RecommendationOneMeal(Resource):
     def get(self):
         userKey = request.args.get("UserKey")
         userPreferences= request.args.get("UserPref")
-        homeIngres = request.args.get("HomeIngredients")
-        mealSelection = request.args.get("MealSelect")
+        mealSelection = int(request.args.get("MealSelect"))
+        homeIngres = int(request.args.get("HomeIngredients"))
+        ingredientsHome = get_user_cellar_from_firebase(userKey)
+        ingredientsHome += ", " + get_user_fav_ingres_from_firebase(userKey)
+        recipesliked = get_user_fav_recipes_from_firebase(userKey)
+        choice = random.choices(recipesliked)
         
-        
-        varx = '{ "One Meal": "' + userKey + userPreferences + homeIngres + mealSelection +'"}'
-        y = json.loads(varx)
         print(mealSelection)
         if(mealSelection == 0):
             var = breakfast_recommendation('KAHVALTILIK TARİFLERİ')
             return var
         
         if(mealSelection == 1):
-            var = ordinary_meal_recommendation()
+            if homeIngres ==1:
+                print("Home")
+                return(ingredient_based_recommendation(ingredientsHome))
+            else:
+                return(ingredient_based_recommendation_recipe(choice[0]))
             
         if(mealSelection == 2):
-            var = ordinary_meal_recommendation()
+            if homeIngres ==1:
+                print("Home")
+                return(ingredient_based_recommendation(ingredientsHome))
+            else:
+                return(ingredient_based_recommendation_recipe(choice[0]))
         
-        
-        
-        return y
+        return "fuck"
 
     def post(self):
     # Write method to write data to the CSV file
